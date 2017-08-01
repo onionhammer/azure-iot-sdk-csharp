@@ -335,14 +335,32 @@ namespace Microsoft.Azure.Devices.Client.Transport
         {
             SendingAmqpLink methodSendingLink = await this.GetMethodSendingLinkAsync(cancellationToken);
             this.SafeAddClosedMethodSendingLinkHandler = this.linkClosedListener;
-            methodSendingLink.SafeAddClosed((o, ea) => this.SafeAddClosedMethodSendingLinkHandler(o, new ConnectionEventArgs { ConnectionType = ConnectionType.AmqpMethodSending, ConnectionStatus = ConnectionStatus.Disconnected_Retrying, ConnectionStatusChangeReason = ConnectionStatusChangeReason.No_Network }));
+            methodSendingLink.SafeAddClosed(async (o, ea) =>
+                await Task.Run(() => 
+                    this.SafeAddClosedMethodSendingLinkHandler(
+                        o, 
+                        new ConnectionEventArgs
+                        {
+                            ConnectionType = ConnectionType.AmqpMethodSending,
+                            ConnectionStatus = ConnectionStatus.Disconnected_Retrying,
+                            ConnectionStatusChangeReason = ConnectionStatusChangeReason.No_Network
+                        })));
         }
 
         private async Task EnableMethodReceivingLinkAsync(CancellationToken cancellationToken)
         {
             ReceivingAmqpLink methodReceivingLink = await this.GetMethodReceivingLinkAsync(cancellationToken);
             this.SafeAddClosedMethodReceivingLinkHandler = this.linkClosedListener;
-            methodReceivingLink.SafeAddClosed((o, ea) => this.SafeAddClosedMethodReceivingLinkHandler(o, new ConnectionEventArgs { ConnectionType = ConnectionType.AmqpMethodReceiving, ConnectionStatus = ConnectionStatus.Disconnected_Retrying, ConnectionStatusChangeReason = ConnectionStatusChangeReason.No_Network }));
+            methodReceivingLink.SafeAddClosed(async (o, ea) => 
+                await Task.Run(() =>
+                    this.SafeAddClosedMethodReceivingLinkHandler(
+                        o, 
+                        new ConnectionEventArgs
+                        {
+                            ConnectionType = ConnectionType.AmqpMethodReceiving,
+                            ConnectionStatus = ConnectionStatus.Disconnected_Retrying,
+                            ConnectionStatusChangeReason = ConnectionStatusChangeReason.No_Network
+                        })));
         }
         
         private async Task EnableTwinSendingLinkAsync(CancellationToken cancellationToken)
@@ -796,7 +814,16 @@ namespace Microsoft.Azure.Devices.Client.Transport
 
             SendingAmqpLink twinSendingLink = await this.IotHubConnection.CreateSendingLinkAsync(path, this.iotHubConnectionString, this.deviceId, IotHubConnection.SendingLinkType.Twin, timeout, cancellationToken);
             this.SafeAddClosedTwinSendingLinkHandler = this.linkClosedListener;
-            twinSendingLink.SafeAddClosed((o, ea) => this.SafeAddClosedTwinSendingLinkHandler(o, new ConnectionEventArgs { ConnectionType = ConnectionType.AmqpTwinSending, ConnectionStatus = ConnectionStatus.Disconnected_Retrying, ConnectionStatusChangeReason = ConnectionStatusChangeReason.No_Network }));
+            twinSendingLink.SafeAddClosed(async (o, ea) => 
+                await Task.Run(() => 
+                    this.SafeAddClosedTwinSendingLinkHandler(
+                        o, 
+                        new ConnectionEventArgs
+                        {
+                            ConnectionType = ConnectionType.AmqpTwinSending,
+                            ConnectionStatus = ConnectionStatus.Disconnected_Retrying,
+                            ConnectionStatusChangeReason = ConnectionStatusChangeReason.No_Network
+                        })));
 
             return twinSendingLink;
         }
@@ -819,7 +846,16 @@ namespace Microsoft.Azure.Devices.Client.Transport
             var link = await this.IotHubConnection.CreateReceivingLinkAsync(path, this.iotHubConnectionString, this.deviceId, IotHubConnection.ReceivingLinkType.Twin, this.prefetchCount, timeout, cancellationToken);
 
             this.SafeAddClosedTwinReceivingLinkHandler = this.linkClosedListener;
-            link.SafeAddClosed((o, ea) => this.SafeAddClosedTwinReceivingLinkHandler(o, new ConnectionEventArgs { ConnectionType = ConnectionType.AmqpTwinReceiving, ConnectionStatus = ConnectionStatus.Disconnected_Retrying, ConnectionStatusChangeReason = ConnectionStatusChangeReason.No_Network }));
+            link.SafeAddClosed(async (o, ea) =>
+                await Task.Run(() => 
+                    this.SafeAddClosedTwinReceivingLinkHandler(
+                        o, 
+                        new ConnectionEventArgs
+                        {
+                            ConnectionType = ConnectionType.AmqpTwinReceiving,
+                            ConnectionStatus = ConnectionStatus.Disconnected_Retrying,
+                            ConnectionStatusChangeReason = ConnectionStatusChangeReason.No_Network
+                        })));
 
             link.RegisterMessageListener(message => this.HandleTwinMessage(message, link));
 

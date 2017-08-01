@@ -737,11 +737,14 @@ TODO: revisit DefaultDelegatingHandler - it seems redundant as long as we have t
 
             var result = operation(operationTimeoutCancellationTokenSource)
                 .WithTimeout(TimeSpan.FromMilliseconds(OperationTimeoutInMilliseconds), () => Resources.OperationTimeoutExpired, operationTimeoutCancellationTokenSource.Token);
-            result.ContinueWith(t =>
-            {
+
+            return result.ContinueWith(t => {
                 operationTimeoutCancellationTokenSource.Dispose();
+                if (t.IsFaulted)
+                {
+                    throw t.Exception.InnerException;
+                }
             });
-            return result;
         }
 
         Task ApplyTimeout(Func<CancellationToken, Task> operation)
@@ -756,11 +759,15 @@ TODO: revisit DefaultDelegatingHandler - it seems redundant as long as we have t
 
             var result = operation(operationTimeoutCancellationTokenSource.Token)
                 .WithTimeout(TimeSpan.FromMilliseconds(OperationTimeoutInMilliseconds), () => Resources.OperationTimeoutExpired, operationTimeoutCancellationTokenSource.Token);
-            result.ContinueWith(t =>
+
+            return result.ContinueWith(t =>
             {
                 operationTimeoutCancellationTokenSource.Dispose();
+                if (t.IsFaulted)
+                {
+                    throw t.Exception.InnerException;
+                }
             });
-            return result;
         }
 
         Task<Message> ApplyTimeoutMessage(Func<CancellationToken, Task<Message>> operation)
@@ -775,12 +782,16 @@ TODO: revisit DefaultDelegatingHandler - it seems redundant as long as we have t
 
             var result = operation(operationTimeoutCancellationTokenSource.Token)
                 .WithTimeout(TimeSpan.FromMilliseconds(OperationTimeoutInMilliseconds), () => Resources.OperationTimeoutExpired, operationTimeoutCancellationTokenSource.Token);
-            result.ContinueWith(t =>
+
+            return result.ContinueWith(t =>
             {
                 operationTimeoutCancellationTokenSource.Dispose();
+                if (t.IsFaulted)
+                {
+                    throw t.Exception.InnerException;
+                }
                 return t.Result;
             });
-            return result;
         }
 
         Task<Twin> ApplyTimeoutTwin(Func<CancellationToken, Task<Twin>> operation)
@@ -795,12 +806,16 @@ TODO: revisit DefaultDelegatingHandler - it seems redundant as long as we have t
 
             var result = operation(operationTimeoutCancellationTokenSource.Token)
                 .WithTimeout(TimeSpan.FromMilliseconds(OperationTimeoutInMilliseconds), () => Resources.OperationTimeoutExpired, operationTimeoutCancellationTokenSource.Token);
-            result.ContinueWith(t =>
+
+            return result.ContinueWith(t =>
             {
                 operationTimeoutCancellationTokenSource.Dispose();
+                if (t.IsFaulted)
+                {
+                    throw t.Exception.InnerException;
+                }
                 return t.Result;
             });
-            return result;
         }
 
 #if !PCL
