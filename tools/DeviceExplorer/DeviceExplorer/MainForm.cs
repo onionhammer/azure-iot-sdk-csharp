@@ -531,7 +531,7 @@ namespace DeviceExplorer
 
             try
             {
-                InFormThread(() => eventHubTextBox.Text = "Receiving events...\r\n");
+                InFormThread(() => eventHubTextBox.Text = "Retrieving past events...");
                 
                 if (showOperationsMonitoring)
                     eventHubClient = EventHubClient.CreateFromConnectionString(activeIoTHubConnectionString, "messages/operationsMonitoringEvents");
@@ -549,6 +549,8 @@ namespace DeviceExplorer
                 {
                     LogEvent(eventData);
                 }
+
+                InFormThread(() => eventHubTextBox.Text += "Done.\r\nReceiving new events...\r\n");
 
                 //having already received past events, monitor current events in a loop
                 while (true)
