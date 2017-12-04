@@ -216,3 +216,4 @@ DOTNETMF_FS_EMULATION*/
 /service/Microsoft.Azure.Devices.Uwp/project.lock.json
 /service/Samples/UWPSample/project.lock.json
 /tools/DeviceExplorer/.vs/DeviceExplorer/v15/sqlite3/storage.ide
+/tools/DeviceExplorer/.vs/DeviceExplorer/v15/Server/sqlite3
