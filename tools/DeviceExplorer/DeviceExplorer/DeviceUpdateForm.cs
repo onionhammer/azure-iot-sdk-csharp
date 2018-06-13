@@ -10,16 +10,14 @@ namespace DeviceExplorer
     {
         private RegistryManager registryManager;
         private string selectedDeviceID;
-        private int devicesMaxCount;
 
         private string lastValidPrimaryKey;
         private string lastValidSecondaryKey;
 
-        public DeviceUpdateForm(RegistryManager manager, int maxDevices, string deviceID)
+        public DeviceUpdateForm(RegistryManager manager, string deviceID)
         {
             InitializeComponent();
             this.registryManager = manager;
-            this.devicesMaxCount = maxDevices;
             this.selectedDeviceID = deviceID;
             updateControls(deviceID);
         }
@@ -29,7 +27,7 @@ namespace DeviceExplorer
             List<string> deviceIds = new List<string>();
             try
             {
-                var devices = await registryManager.GetDevicesAsync(devicesMaxCount);
+                var devices = await registryManager.GetDevicesAsync(1000);
                 foreach (var device in devices)
                 {
                     deviceIds.Add(device.Id);
@@ -86,7 +84,7 @@ namespace DeviceExplorer
         {
             try
             {
-                var devices = await registryManager.GetDevicesAsync(devicesMaxCount);
+                var devices = await registryManager.GetDevicesAsync(1000);
                 Device updatedDevice = null;
                 foreach (var device in devices)
                 {

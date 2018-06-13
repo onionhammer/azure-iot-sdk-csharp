@@ -25,7 +25,6 @@ namespace DeviceExplorer
     {
         #region fields
         private const int MAX_TTL_VALUE = 365;
-        private const int MAX_COUNT_OF_DEVICES = 1000;
         private const int MAX_PAST_CONNECTION_STRINGS = 5;
 
         private bool devicesListed = false;
@@ -184,7 +183,8 @@ namespace DeviceExplorer
                 List<string> deviceIdsForDeviceMethod = new List<string>();
                 RegistryManager registryManager = RegistryManager.CreateFromConnectionString(activeIoTHubConnectionString);
 
-                var devices = await registryManager.GetDevicesAsync(MAX_COUNT_OF_DEVICES);
+                var processor = new DevicesProcessor(activeIoTHubConnectionString);
+                var devices = await processor.GetDevices();
                 foreach (var device in devices)
                 {
                     deviceIdsForEvent.Add(device.Id);
@@ -342,7 +342,7 @@ namespace DeviceExplorer
         #region ManagementTab
         private async Task updateDevicesGridView()
         {
-            var devicesProcessor           = new DevicesProcessor(activeIoTHubConnectionString, MAX_COUNT_OF_DEVICES, protocolGatewayHost.Text);
+            var devicesProcessor           = new DevicesProcessor(activeIoTHubConnectionString);
             var devicesList                = await devicesProcessor.GetDevices();
             var sortableDevicesBindingList = new SortableBindingList<DeviceEntity>(devicesList.OrderByDescending(p => p.LastActivityTime));
 
@@ -351,21 +351,14 @@ namespace DeviceExplorer
             devicesGridView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             devicesGridView.Sort(devicesGridView.Columns[nameof(DeviceEntity.LastActivityTime)], System.ComponentModel.ListSortDirection.Descending);
 
-            if (devicesList.Count() > MAX_COUNT_OF_DEVICES)
-            {
-                deviceCountLabel.Text = MAX_COUNT_OF_DEVICES + "+";
-            }
-            else
-            {
-                deviceCountLabel.Text = devicesList.Count().ToString();
-            }
+            deviceCountLabel.Text = devicesList.Count().ToString();
         }
 
         private void createButton_Click(object sender, EventArgs e)
         {
             try
             {
-                CreateDeviceForm createForm = new CreateDeviceForm(activeIoTHubConnectionString, MAX_COUNT_OF_DEVICES);
+                CreateDeviceForm createForm = new CreateDeviceForm(activeIoTHubConnectionString);
                 createForm.ShowDialog();    // Modal window
                 UpdateListOfDevices();
             }
@@ -408,7 +401,7 @@ namespace DeviceExplorer
             {
                 string selectedDeviceId = devicesGridView.CurrentRow.Cells[0].Value.ToString();
                 RegistryManager registryManager = RegistryManager.CreateFromConnectionString(activeIoTHubConnectionString);
-                DeviceUpdateForm updateForm = new DeviceUpdateForm(registryManager, MAX_COUNT_OF_DEVICES, selectedDeviceId);
+                DeviceUpdateForm updateForm = new DeviceUpdateForm(registryManager, selectedDeviceId);
                 updateForm.ShowDialog(this);
                 updateForm.Dispose();
                 await updateDevicesGridView();
@@ -996,7 +989,7 @@ namespace DeviceExplorer
             try
             {
                 RegistryManager registryManager = RegistryManager.CreateFromConnectionString(activeIoTHubConnectionString);
-                SASTokenForm sasForm = new SASTokenForm(registryManager, MAX_COUNT_OF_DEVICES, iotHubHostName);
+                SASTokenForm sasForm = new SASTokenForm(registryManager, iotHubHostName);
                 sasForm.ShowDialog(this);
                 sasForm.Dispose();
                 await updateDevicesGridView();

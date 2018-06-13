@@ -13,13 +13,12 @@ namespace DeviceExplorer
         private bool generateDeviceID;
         private bool generateDeviceKeys;
 
-        public CreateDeviceForm(string iotHubConnectionString, int devicesMaxCount)
+        public CreateDeviceForm(string iotHubConnectionString)
         {
             InitializeComponent();
 
             this.iotHubConnectionString = iotHubConnectionString;
             this.registryManager = RegistryManager.CreateFromConnectionString(iotHubConnectionString);
-            this.devicesMaxCount = devicesMaxCount;
 
             generateIDCheckBox.Checked = false;
             generateDeviceID = false;

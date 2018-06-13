@@ -17,17 +17,15 @@ namespace DeviceExplorer
     {
         private RegistryManager registryManager;
         private string selectedDeviceId;
-        private int devicesMaxCount;
         private string selectedDeviceKey;
         private string iotHubHostName;
         private IEnumerable<Device> iotHubDevices;
         private Dictionary<string, Device> devicesDictionary;
 
-        public SASTokenForm(RegistryManager registryManager, int maxDevices, string iotHubHostName)
+        public SASTokenForm(RegistryManager registryManager, string iotHubHostName)
         {
             InitializeComponent();
             this.registryManager = registryManager;
-            this.devicesMaxCount = maxDevices;
             this.iotHubHostName = iotHubHostName;
             initControls();
         }
@@ -38,7 +36,7 @@ namespace DeviceExplorer
 
             try
             {
-                this.iotHubDevices = await registryManager.GetDevicesAsync(devicesMaxCount);
+                this.iotHubDevices = await registryManager.GetDevicesAsync(1000);
 
 
                 // Build the deviceID ComboBox and update the corresponding keys

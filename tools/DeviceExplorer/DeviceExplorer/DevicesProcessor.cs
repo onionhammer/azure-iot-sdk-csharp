@@ -1,4 +1,5 @@
 ﻿using Microsoft.Azure.Devices;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,77 +12,42 @@ namespace DeviceExplorer
         private List<DeviceEntity> listOfDevices;
         private RegistryManager registryManager;
         private String iotHubConnectionString;
-        private int maxCountOfDevices;
-        private String protocolGatewayHostName;
 
-        public DevicesProcessor(string iotHubConnenctionString, int devicesCount, string protocolGatewayName)
+        public DevicesProcessor(string iotHubConnenctionString)
         {
             this.listOfDevices = new List<DeviceEntity>();
             this.iotHubConnectionString = iotHubConnenctionString;
-            this.maxCountOfDevices = devicesCount;
-            this.protocolGatewayHostName = protocolGatewayName;
             this.registryManager = RegistryManager.CreateFromConnectionString(iotHubConnectionString);
         }
 
         public async Task<List<DeviceEntity>> GetDevices()
         {
-            try
+            var query = registryManager.CreateQuery("select * from devices");
+            var result = new List<DeviceEntity>();
+
+            while (query.HasMoreResults)
             {
-                DeviceEntity deviceEntity;
-                var devices = await registryManager.GetDevicesAsync(maxCountOfDevices);
-
-                if (devices != null)
+                foreach (var deviceJson in await query.GetNextAsJsonAsync())
                 {
-                    foreach (var device in devices)
+                    var device = JsonConvert.DeserializeObject<DeviceRecord>(deviceJson);
+
+                    var deviceEntity = new DeviceEntity
                     {
-                        deviceEntity = new DeviceEntity()
-                        {
-                            Id                             = device.Id,
-                            ConnectionState                = device.ConnectionState.ToString(),
-                            ConnectionString               = CreateDeviceConnectionString(device),
-                            LastActivityTime               = DateTime.SpecifyKind(device.LastActivityTime, DateTimeKind.Utc).ToLocalTime(),
-                            LastConnectionStateUpdatedTime = DateTime.SpecifyKind(device.ConnectionStateUpdatedTime, DateTimeKind.Utc).ToLocalTime(),
-                            LastStateUpdatedTime           = DateTime.SpecifyKind(device.StatusUpdatedTime, DateTimeKind.Utc).ToLocalTime(),
-                            MessageCount                   = device.CloudToDeviceMessageCount,
-                            State                          = device.Status.ToString(),
-                            SuspensionReason               = device.StatusReason
-                        };
 
-                        if (device.Authentication != null)
-                        {
+                        Id = device.DeviceId,
+                        ConnectionState = device.ConnectionState,
+                        LastActivityTime = device.LastActivityTime.LocalDateTime,// DateTime.SpecifyKind(device.LastActivityTime, DateTimeKind.Utc).ToLocalTime(),
+                        LastConnectionStateUpdatedTime = device.StatusUpdateTime.LocalDateTime,// DateTime.SpecifyKind(device.ConnectionStateUpdatedTime, DateTimeKind.Utc).ToLocalTime(),
+                        LastStateUpdatedTime = device.StatusUpdateTime.LocalDateTime ,//DateTime.SpecifyKind(device.StatusUpdatedTime, DateTimeKind.Utc).ToLocalTime(),
+                        MessageCount = device.CloudToDeviceMessageCount,
+                        State = device.Status
+                    };
 
-                            deviceEntity.PrimaryKey = device.Authentication.SymmetricKey?.PrimaryKey;
-                            deviceEntity.SecondaryKey = device.Authentication.SymmetricKey?.SecondaryKey;
-                            deviceEntity.PrimaryThumbPrint = device.Authentication.X509Thumbprint?.PrimaryThumbprint;
-                            deviceEntity.SecondaryThumbPrint = device.Authentication.X509Thumbprint?.SecondaryThumbprint;
-
-                            //if ((device.Authentication.SymmetricKey != null) &&
-                            //    !((device.Authentication.SymmetricKey.PrimaryKey == null) ||
-                            //      (device.Authentication.SymmetricKey.SecondaryKey == null)))
-                            //{
-                            //    deviceEntity.PrimaryKey = device.Authentication.SymmetricKey.PrimaryKey;
-                            //    deviceEntity.SecondaryKey = device.Authentication.SymmetricKey.SecondaryKey;
-                            //    deviceEntity.PrimaryThumbPrint = "";
-                            //    deviceEntity.SecondaryThumbPrint = "";
-                            //}
-                            //else
-                            //{
-                            //    deviceEntity.PrimaryKey = "";
-                            //    deviceEntity.SecondaryKey = "";
-                            //    deviceEntity.PrimaryThumbPrint = device.Authentication.X509Thumbprint.PrimaryThumbprint;
-                            //    deviceEntity.SecondaryThumbPrint = device.Authentication.X509Thumbprint.SecondaryThumbprint;
-                            //}
-                        }
-
-                        listOfDevices.Add(deviceEntity);
-                    }
+                    result.Add(deviceEntity);
                 }
             }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            return listOfDevices;
+
+            return result;
         }
 
         private String CreateDeviceConnectionString(Device device)
@@ -116,26 +82,19 @@ namespace DeviceExplorer
                         deviceConnectionString.AppendFormat(";x509=true");
                     }
                 }
-
-                if (this.protocolGatewayHostName.Length > 0)
-                {
-                    deviceConnectionString.AppendFormat(";GatewayHostName=ssl://{0}:8883", this.protocolGatewayHostName);
-                }
             }
             
             return deviceConnectionString.ToString();
         }
-        // For testing without connecting to a live service
-        static public List<DeviceEntity> GetDevicesForTest()
+        private class DeviceRecord
         {
-            List<DeviceEntity> deviceList;
-            deviceList = new List<DeviceEntity>();
-            deviceList.Add(new DeviceEntity() { Id = "TestDevice01", PrimaryKey = "TestPrimKey01", SecondaryKey = "TestSecKey01" });
-            deviceList.Add(new DeviceEntity() { Id = "TestDevice02", PrimaryKey = "TestPrimKey02", SecondaryKey = "TestSecKey02" });
-            deviceList.Add(new DeviceEntity() { Id = "TestDevice03", PrimaryKey = "TestPrimKey03", SecondaryKey = "TestSecKey03" });
-            deviceList.Add(new DeviceEntity() { Id = "TestDevice04", PrimaryKey = "TestPrimKey04", SecondaryKey = "TestSecKey04" });
-            deviceList.Add(new DeviceEntity() { Id = "TestDevice05", PrimaryKey = "TestPrimKey05", SecondaryKey = "TestSecKey05" });
-            return deviceList;
+            public string DeviceId { get; set; }
+            public string ConnectionState { get; set; }
+            public DateTimeOffset LastActivityTime { get; set; }
+            public DateTimeOffset StatusUpdateTime { get; set; }
+            public int CloudToDeviceMessageCount { get; set; }
+            public string Status { get; set; }
+            public string AuthenticationType { get; set; }
         }
     }
 }
